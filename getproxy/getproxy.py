@@ -171,7 +171,10 @@ class GetProxy(object):
         if self.input_proxies_file and os.path.exists(self.input_proxies_file):
             with open(self.input_proxies_file) as fd:
                 for line in fd:
-                    self.input_proxies.append(json.loads(line))
+                    try:
+                        self.input_proxies.append(json.loads(line))
+                    except:
+                        continue
 
     def validate_input_proxies(self):
         logger.info("[*] Validate input proxies")
