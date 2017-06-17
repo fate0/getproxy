@@ -100,7 +100,7 @@ class GetProxy(object):
             "port": port,
             "anonymity": anonymity,
             "country": country,
-            "response_time": request_end - request_begin,
+            "response_time": round(request_end - request_begin, 2),
             "from": proxy.get('from')
         }
 
