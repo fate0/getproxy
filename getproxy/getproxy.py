@@ -77,14 +77,18 @@ class GetProxy(object):
         request_begin = time.time()
         try:
             response_json = requests.get(
-                "%s://httpbin.org/get?show_env=1" % scheme,
+                "%s://httpbin.org/get?show_env=1&cur=%s" % (scheme, request_begin),
                 proxies=request_proxies,
-                timeout=10
+                timeout=5
             ).json()
         except:
             return
 
         request_end = time.time()
+
+        if str(request_begin) != response_json.get('args', {}).get('cur', ''):
+            return
+
         anonymity = self._check_proxy_anonymity(response_json)
 
         if not country:
