@@ -7,6 +7,7 @@ import re
 import time
 import base64
 import logging
+import retrying
 import requests
 
 
@@ -22,10 +23,10 @@ class Proxy(object):
         self.proxies = []
         self.result = []
 
+    @retrying.retry(stop_max_attempt_number=3)
     def extract_proxy(self, page_num):
         try:
             rp = requests.get(self.url.format(page=page_num), proxies=self.cur_proxy, timeout=10)
-
             re_ip_port_encode_result = self.re_ip_port_encode_pattern.findall(rp.text)
 
             if not re_ip_port_encode_result:
