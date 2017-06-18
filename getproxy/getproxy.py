@@ -65,7 +65,6 @@ class GetProxy(object):
         port = proxy.get('port')
 
         proxy_hash = '%s://%s:%s' % (scheme, host, port)
-
         if proxy_hash in self.proxies_hash:
             return
 
@@ -90,9 +89,7 @@ class GetProxy(object):
             return
 
         anonymity = self._check_proxy_anonymity(response_json)
-
-        if not country:
-            country = self.geoip_reader.country(host).country.iso_code
+        country = country or self.geoip_reader.country(host).country.iso_code
 
         return {
             "type": scheme,
@@ -217,7 +214,7 @@ class GetProxy(object):
         self.valid_proxies.extend(valid_proxies)
 
     def save_proxies(self):
-        logger.info("[*] Got %s valid proxies" % len(self.valid_proxies))
+        logger.info("[*] Check %s proxies, Got %s valid proxies" % (len(self.proxies_hash), len(self.valid_proxies)))
         if self.output_proxies_file:
             outfile = open(self.output_proxies_file, 'w')
         else:
