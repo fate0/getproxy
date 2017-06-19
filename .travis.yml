@@ -30,6 +30,5 @@ deploy:
       eEZpeVAwSW83ODhsVm1McXM2SnRHM3ZnOWtXZ1lNNEtrY2NaNlAybkpaKzRiWWxZYXp6b1F3aWJX
       Mi9aS3VXcHMrV1d5U3ZxT3pueW9jTUZtVy9OU3Jndmw5OXBPOXYwaXVTdmlCblV4NGp5QWtOY0k9
   on:
-    tags: true
     repo: fate0/getproxy
     python: 3.5
