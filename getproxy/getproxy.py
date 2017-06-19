@@ -21,7 +21,7 @@ from .utils import signal_name, load_object
 
 gevent.monkey.patch_all()
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
