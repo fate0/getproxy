@@ -40,18 +40,6 @@ class GetProxy(object):
         self.origin_ip = None
         self.geoip_reader = None
 
-        self.steps = [
-            'init',
-            'load_input_proxies',
-            'validate_input_proxies',
-            'load_plugins',
-            'grab_web_proxies',
-            'validate_web_proxies',
-            'save_proxies'
-        ]
-
-        self.cur_step = None
-
     def _collect_result(self):
         for plugin in self.plugins:
             if not plugin.result:
@@ -128,7 +116,7 @@ class GetProxy(object):
             return 'high_anonymous'
 
     def _request_force_stop(self, signum, _):
-        logger.warning("Cold shut down")
+        logger.warning("[-] Cold shut down")
         self.save_proxies()
 
         raise SystemExit()
@@ -139,21 +127,7 @@ class GetProxy(object):
         signal.signal(signal.SIGINT, self._request_force_stop)
         signal.signal(signal.SIGTERM, self._request_force_stop)
 
-        logger.warning("Stopping after validate all ip."
-                       "Press Ctrl+C again for a cold shutdown.")
-
-        cur_index = self.steps.index(self.cur_step)
-        grab_index = self.steps.index('grab_web_proxies')
-
-        if cur_index < grab_index:
-            self.save_proxies()
-            raise SystemExit()
-        elif cur_index == grab_index:
-            self.pool.kill()
-            self._collect_result()
-            self.validate_web_proxies()
-            self.save_proxies()
-            raise SystemExit()
+        logger.warning("[-] Press Ctrl+C again for a cold shutdown.")
 
     def init(self):
         logger.info("[*] Init")
@@ -226,9 +200,13 @@ class GetProxy(object):
         outfile.flush()
 
     def start(self):
-        for step in self.steps:
-            self.cur_step = step
-            getattr(self, self.cur_step)()
+        self.init()
+        self.load_input_proxies()
+        self.validate_input_proxies()
+        self.load_plugins()
+        self.grab_web_proxies()
+        self.validate_web_proxies()
+        self.save_proxies()
 
 
 if __name__ == '__main__':
