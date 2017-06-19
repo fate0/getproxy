@@ -11,7 +11,7 @@ import retrying
 import requests
 
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 
 
 class Proxy(object):
