@@ -199,6 +199,9 @@ class GetProxy(object):
 
         outfile.flush()
 
+        if outfile != sys.stdout:
+            outfile.close()
+
     def start(self):
         self.init()
         self.load_input_proxies()
