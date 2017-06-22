@@ -154,6 +154,8 @@ class GetProxy(object):
     def validate_input_proxies(self):
         logger.info("[*] Validate input proxies")
         self.valid_proxies = self._validate_proxy_list(self.input_proxies)
+        logger.info("[*] Check %s input proxies, Got %s valid input proxies" %
+                    (len(self.proxies_hash), len(self.valid_proxies)))
 
     def load_plugins(self):
         logger.info("[*] Load plugins")
@@ -184,11 +186,19 @@ class GetProxy(object):
 
     def validate_web_proxies(self):
         logger.info("[*] Validate web proxies")
+        input_proxies_len = len(self.proxies_hash)
+
         valid_proxies = self._validate_proxy_list(self.web_proxies)
         self.valid_proxies.extend(valid_proxies)
 
+        output_proxies_len = len(self.proxies_hash) - input_proxies_len
+
+        logger.info("[*] Check %s output proxies, Got %s valid output proxies" %
+                    (output_proxies_len, len(valid_proxies)))
+        logger.info("[*] Check %s proxies, Got %s valid proxies" %
+                    (len(self.proxies_hash), len(self.valid_proxies)))
+
     def save_proxies(self):
-        logger.info("[*] Check %s proxies, Got %s valid proxies" % (len(self.proxies_hash), len(self.valid_proxies)))
         if self.output_proxies_file:
             outfile = open(self.output_proxies_file, 'w')
         else:
@@ -198,6 +208,9 @@ class GetProxy(object):
             outfile.write("%s\n" % json.dumps(item))
 
         outfile.flush()
+
+        if outfile != sys.stdout:
+            outfile.close()
 
     def start(self):
         self.init()

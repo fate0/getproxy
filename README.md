@@ -5,13 +5,14 @@
 [![PyPI](https://img.shields.io/pypi/v/getproxy.svg)](https://pypi.python.org/pypi/getproxy)
 [![PyPI](https://img.shields.io/pypi/pyversions/getproxy.svg)](https://pypi.python.org/pypi/getproxy)
 
-getproxy 是一个抓取发放代理网站，获取 http/https 代理的程序
+getproxy 是一个抓取发放代理网站，获取 http/https 代理的程序，
+每 15 min 会更新数据至 [fate0/proxylist](https://github.com/fate0/proxylist)
 
 
 ## 1. 安装
 
 ```
-pip install getproxy
+pip install -U getproxy
 ```
 
 ## 2. 使用
@@ -167,9 +168,20 @@ print(g.valid_proxies)
 
 * 为什么不使用 xxx 数据库？
 
-数据量并不大，就算用文本格式全读进内存，也占用不了多少内存，
-使用文本格式还有另外一个好处是可以创建这个项目 [fate0/proxylist](https://github.com/fate0/proxylist)
+数据量并不大，就算用文本格式全读进内存，也占用不了多少内存，就算真的需要存储至数据库，自己再多写几行代码就搞定。
+另外使用文本格式还有另外一个好处是可以创建这个项目 [fate0/proxylist](https://github.com/fate0/proxylist)
 
 * 和 xxx 有什么区别?
 
-简单、方便、快捷
+简单、方便、快捷，除了 Python 环境，其他都不用设置。
+
+* 报错啦，怎么办?
+
+仔细看看错误信息，是不是一些 plugin 报错误，而且错误都是和网络相关的？
+如果是的话，可能这些 plugin 访问的网站由于众所周知的原因被 block 了。
+如果不是，赶紧提 Issue。
+
+* 还继续添加新的 plugin 吗？
+
+主要看这个项目 [fate0/proxylist](https://github.com/fate0/proxylist) 中的 `proxy.list` 数量，
+如果 `proxy.list` 行数接近 5000 个，那就不再继续添加新的 plugin，防止 travis 15min 内不结束。
