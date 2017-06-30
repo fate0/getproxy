@@ -16,7 +16,11 @@ requirements = [
 
 setup(
     name='getproxy',
+<<<<<<< HEAD
     version='0.2.1',
+=======
+    version='0.2.2',
+>>>>>>> develop
     description="get proxy",
     long_description=readme,
     author="fate0",

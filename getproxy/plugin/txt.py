@@ -51,7 +51,10 @@ class Proxy(object):
 
     def start(self):
         for url in self.txt_list:
-            page_result = self.extract_proxy(url)
+            try:
+                page_result = self.extract_proxy(url)
+            except:
+                continue
 
             if not page_result:
                 continue
