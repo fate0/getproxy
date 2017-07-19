@@ -78,10 +78,12 @@ class GetProxy(object):
 
         anonymity = self._check_proxy_anonymity(response_json)
         country = country or self.geoip_reader.country(host).country.iso_code
+        export_address = self._check_export_address(response_json)
 
         return {
             "type": scheme,
             "host": host,
+            "export_address": export_address,
             "port": port,
             "anonymity": anonymity,
             "country": country,
@@ -114,6 +116,12 @@ class GetProxy(object):
             return 'anonymous'
         else:
             return 'high_anonymous'
+
+    def _check_export_address(self, response):
+        origin = response.get('origin', '').split(', ')
+        if self.origin_ip in origin:
+            origin.remove(self.origin_ip)
+        return origin
 
     def _request_force_stop(self, signum, _):
         logger.warning("[-] Cold shut down")
