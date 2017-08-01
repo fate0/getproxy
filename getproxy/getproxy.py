@@ -21,7 +21,7 @@ from .utils import signal_name, load_object
 
 gevent.monkey.patch_all()
 
-logger = logging.getLogger(__file__)
+logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
@@ -40,18 +40,6 @@ class GetProxy(object):
         self.origin_ip = None
         self.geoip_reader = None
 
-        self.steps = [
-            'init',
-            'load_input_proxies',
-            'validate_input_proxies',
-            'load_plugins',
-            'grab_web_proxies',
-            'validate_web_proxies',
-            'save_proxies'
-        ]
-
-        self.cur_step = None
-
     def _collect_result(self):
         for plugin in self.plugins:
             if not plugin.result:
@@ -65,7 +53,6 @@ class GetProxy(object):
         port = proxy.get('port')
 
         proxy_hash = '%s://%s:%s' % (scheme, host, port)
-
         if proxy_hash in self.proxies_hash:
             return
 
@@ -77,26 +64,30 @@ class GetProxy(object):
         request_begin = time.time()
         try:
             response_json = requests.get(
-                "%s://httpbin.org/get?show_env=1" % scheme,
+                "%s://httpbin.org/get?show_env=1&cur=%s" % (scheme, request_begin),
                 proxies=request_proxies,
-                timeout=10
+                timeout=5
             ).json()
         except:
             return
 
         request_end = time.time()
-        anonymity = self._check_proxy_anonymity(response_json)
 
-        if not country:
-            country = self.geoip_reader.country(host).country.iso_code
+        if str(request_begin) != response_json.get('args', {}).get('cur', ''):
+            return
+
+        anonymity = self._check_proxy_anonymity(response_json)
+        country = country or self.geoip_reader.country(host).country.iso_code
+        export_address = self._check_export_address(response_json)
 
         return {
             "type": scheme,
             "host": host,
+            "export_address": export_address,
             "port": port,
             "anonymity": anonymity,
             "country": country,
-            "response_time": request_end - request_begin,
+            "response_time": round(request_end - request_begin, 2),
             "from": proxy.get('from')
         }
 
@@ -126,8 +117,14 @@ class GetProxy(object):
         else:
             return 'high_anonymous'
 
+    def _check_export_address(self, response):
+        origin = response.get('origin', '').split(', ')
+        if self.origin_ip in origin:
+            origin.remove(self.origin_ip)
+        return origin
+
     def _request_force_stop(self, signum, _):
-        logger.warning("Cold shut down")
+        logger.warning("[-] Cold shut down")
         self.save_proxies()
 
         raise SystemExit()
@@ -138,21 +135,7 @@ class GetProxy(object):
         signal.signal(signal.SIGINT, self._request_force_stop)
         signal.signal(signal.SIGTERM, self._request_force_stop)
 
-        logger.warning("Stopping after validate all ip."
-                       "Press Ctrl+C again for a cold shutdown.")
-
-        cur_index = self.steps.index(self.cur_step)
-        grab_index = self.steps.index('grab_web_proxies')
-
-        if cur_index < grab_index:
-            self.save_proxies()
-            raise SystemExit()
-        elif cur_index == grab_index:
-            self.pool.kill()
-            self._collect_result()
-            self.validate_web_proxies()
-            self.save_proxies()
-            raise SystemExit()
+        logger.warning("[-] Press Ctrl+C again for a cold shutdown.")
 
     def init(self):
         logger.info("[*] Init")
@@ -171,11 +154,16 @@ class GetProxy(object):
         if self.input_proxies_file and os.path.exists(self.input_proxies_file):
             with open(self.input_proxies_file) as fd:
                 for line in fd:
-                    self.input_proxies.append(json.loads(line))
+                    try:
+                        self.input_proxies.append(json.loads(line))
+                    except:
+                        continue
 
     def validate_input_proxies(self):
         logger.info("[*] Validate input proxies")
         self.valid_proxies = self._validate_proxy_list(self.input_proxies)
+        logger.info("[*] Check %s input proxies, Got %s valid input proxies" %
+                    (len(self.proxies_hash), len(self.valid_proxies)))
 
     def load_plugins(self):
         logger.info("[*] Load plugins")
@@ -206,11 +194,19 @@ class GetProxy(object):
 
     def validate_web_proxies(self):
         logger.info("[*] Validate web proxies")
+        input_proxies_len = len(self.proxies_hash)
+
         valid_proxies = self._validate_proxy_list(self.web_proxies)
         self.valid_proxies.extend(valid_proxies)
 
+        output_proxies_len = len(self.proxies_hash) - input_proxies_len
+
+        logger.info("[*] Check %s output proxies, Got %s valid output proxies" %
+                    (output_proxies_len, len(valid_proxies)))
+        logger.info("[*] Check %s proxies, Got %s valid proxies" %
+                    (len(self.proxies_hash), len(self.valid_proxies)))
+
     def save_proxies(self):
-        logger.info("[*] Got %s valid proxies" % len(self.valid_proxies))
         if self.output_proxies_file:
             outfile = open(self.output_proxies_file, 'w')
         else:
@@ -221,10 +217,17 @@ class GetProxy(object):
 
         outfile.flush()
 
+        if outfile != sys.stdout:
+            outfile.close()
+
     def start(self):
-        for step in self.steps:
-            self.cur_step = step
-            getattr(self, self.cur_step)()
+        self.init()
+        self.load_input_proxies()
+        self.validate_input_proxies()
+        self.load_plugins()
+        self.grab_web_proxies()
+        self.validate_web_proxies()
+        self.save_proxies()
 
 
 if __name__ == '__main__':

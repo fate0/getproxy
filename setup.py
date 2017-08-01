@@ -1,10 +1,21 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import re
+import ast
 from setuptools import setup, find_packages
 
 with open('README.md') as readme_file:
     readme = readme_file.read()
+
+
+_version_re = re.compile(r'__version__\s+=\s+(.*)')
+
+
+with open('getproxy/__init__.py', 'rb') as f:
+    version = str(ast.literal_eval(_version_re.search(
+        f.read().decode('utf-8')).group(1)))
+
 
 requirements = [
     'click>=6.0',
@@ -16,7 +27,7 @@ requirements = [
 
 setup(
     name='getproxy',
-    version='0.1.0',
+    version=version,
     description="get proxy",
     long_description=readme,
     author="fate0",
@@ -40,7 +51,6 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Natural Language :: English',
         "Programming Language :: Python :: 2",
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',

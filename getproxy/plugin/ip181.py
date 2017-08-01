@@ -4,8 +4,6 @@
 from __future__ import unicode_literals, absolute_import, division, print_function
 
 import re
-import time
-import base64
 import logging
 import retrying
 import requests
@@ -16,8 +14,9 @@ logger = logging.getLogger(__name__)
 
 class Proxy(object):
     def __init__(self):
-        self.url = 'http://proxy-list.org/english/index.php?p={page}'  # 从1-10
-        self.re_ip_port_encode_pattern = re.compile(r"Proxy\(\'([\w\d=+]+)\'\)", re.I)
+        self.url = 'http://www.ip181.com/'
+        self.re_ip_port_pattern = re.compile(
+            r"<tr>\s+<td>(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})</td>\s+<td>(\d{1,5})</td>", re.I)
 
         self.cur_proxy = None
         self.proxies = []
@@ -26,10 +25,10 @@ class Proxy(object):
     @retrying.retry(stop_max_attempt_number=3)
     def extract_proxy(self, page_num):
         try:
-            rp = requests.get(self.url.format(page=page_num), proxies=self.cur_proxy, timeout=10)
-            re_ip_port_encode_result = self.re_ip_port_encode_pattern.findall(rp.text)
+            rp = requests.get(self.url, proxies=self.cur_proxy, timeout=10)
+            re_ip_port_result = self.re_ip_port_pattern.findall(rp.text)
 
-            if not re_ip_port_encode_result:
+            if not re_ip_port_result:
                 raise Exception("empty")
 
         except Exception as e:
@@ -41,23 +40,14 @@ class Proxy(object):
             else:
                 return []
 
-        re_ip_port_result = []
-        for each_result in re_ip_port_encode_result:
-            decode_ip_port = base64.b64decode(each_result).decode('utf-8')
-            host, port = decode_ip_port.split(':')
-            re_ip_port_result.append({"host": host, "port": int(port), "from": "proxylist"})
-
-        return re_ip_port_result
+        return [{"host": host, "port": int(port), "from": "ip181"} for host, port in re_ip_port_result]
 
     def start(self):
-        for page in range(1, 10):
-            page_result = self.extract_proxy(page)
-            time.sleep(3)
+        page_result = self.extract_proxy(0)
+        if not page_result:
+            return
 
-            if not page_result:
-                return
-
-            self.result.extend(page_result)
+        self.result.extend(page_result)
 
 
 if __name__ == '__main__':
