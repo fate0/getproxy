@@ -33,7 +33,11 @@ class Proxy(object):
     @retrying.retry(stop_max_attempt_number=3)
     def extract_proxy(self, url):
         try:
-            rp = requests.get(url, proxies=self.cur_proxy, timeout=10)
+            headers = {
+                'User-Agent': "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/537.1 (KHTML, like Gecko) "
+                              "Chrome/21.0.1180.89 Safari/537.1'"
+            }
+            rp = requests.get(url, proxies=self.cur_proxy, headers=headers, timeout=10)
 
             re_ip_port_result = self.re_ip_port_pattern.findall(rp.text)
 
