@@ -23,6 +23,7 @@ class Proxy(object):
         self.txt_list = [
             # 'http://api.xicidaili.com/free2016.txt',
             'http://static.fatezero.org/tmp/proxy.txt',
+            'http://pubproxy.com/api/proxy?limit=20&format=txt&type=http',
             'http://www.proxylists.net/http_highanon.txt',
             'http://www.proxylists.net/http.txt',
             'http://ab57.ru/downloads/proxylist.txt',
