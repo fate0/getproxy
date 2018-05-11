@@ -51,7 +51,7 @@ class Proxy(object):
                 return []
 
         result_dict = dict(zip(re_ip_result, re_port_result))
-        return [{"host": host, "port": port, "from": "xicidaili"} for host, port in result_dict.items()]
+        return [{"host": host, "port": int(port), "from": "xicidaili"} for host, port in result_dict.items()]
 
     def start(self):
         for url in self.urls:
