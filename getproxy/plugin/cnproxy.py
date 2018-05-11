@@ -71,7 +71,7 @@ class Proxy(object):
             re_port_result.append(int(''.join(list(map(lambda x: self.port_dict.get(x, ''), each_result)))))
 
         result_dict = dict(zip(re_ip_result, re_port_result))
-        return [{"host": host, "port": port, "from": "cnproxy"} for host, port in result_dict.items()]
+        return [{"host": host, "port": int(port), "from": "cnproxy"} for host, port in result_dict.items()]
 
     def start(self):
         for page in range(1, 10):

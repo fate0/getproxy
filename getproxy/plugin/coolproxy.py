@@ -54,7 +54,7 @@ class Proxy(object):
             re_ip_result.append(decode_ip.decode('utf-8'))
 
         result_dict = dict(zip(re_ip_result, re_port_result))
-        return [{"host": host, "port": port, "from": "coolproxy"} for host, port in result_dict.items()]
+        return [{"host": host, "port": int(port), "from": "coolproxy"} for host, port in result_dict.items()]
 
     def start(self):
         for page in range(1, 10):
