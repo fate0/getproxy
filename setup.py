@@ -18,11 +18,11 @@ with open('getproxy/__init__.py', 'rb') as f:
 
 
 requirements = [
-    'click>=6.0',
-    'requests>=2.13.0',
-    'gevent>=1.2.1',
-    'geoip2>=2.5.0',
-    'retrying>=1.3.3'
+    'click==6.0',
+    'requests==2.13.0',
+    'gevent==1.2.1',
+    'geoip2==2.5.0',
+    'retrying==1.3.3'
 ]
 
 setup(
