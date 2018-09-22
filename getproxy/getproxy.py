@@ -3,6 +3,9 @@
 
 from __future__ import unicode_literals, absolute_import, division, print_function
 
+import gevent.monkey
+gevent.monkey.patch_all()
+
 import os
 import sys
 import json
@@ -13,13 +16,10 @@ import logging
 
 import requests
 import gevent.pool
-import gevent.monkey
 import geoip2.database
 
 from .utils import signal_name, load_object
 
-
-gevent.monkey.patch_all()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
