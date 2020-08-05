@@ -22,6 +22,7 @@ requirements = [
     'requests==2.13.0',
     'gevent==1.2.1',
     'geoip2==2.5.0',
+    'maxminddb==1.5.2',
     'retrying==1.3.3'
 ]
 
