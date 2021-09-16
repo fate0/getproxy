@@ -77,8 +77,12 @@ class GetProxy(object):
             return
 
         anonymity = self._check_proxy_anonymity(response_json)
-        country = country or self.geoip_reader.country(host).country.iso_code
         export_address = self._check_export_address(response_json)
+        
+        try:
+            country = country or self.geoip_reader.country(host).country.iso_code
+        except Exception:
+            country = "unknown"
 
         return {
             "type": scheme,
