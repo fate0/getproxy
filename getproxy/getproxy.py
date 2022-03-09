@@ -51,15 +51,23 @@ class GetProxy(object):
         country = proxy.get('country')
         host = proxy.get('host')
         port = proxy.get('port')
+        proxy_type = scheme
 
         proxy_hash = '%s://%s:%s' % (scheme, host, port)
         if proxy_hash in self.proxies_hash:
             return
 
         self.proxies_hash[proxy_hash] = True
-        request_proxies = {
-            scheme: "%s:%s" % (host, port)
-        }
+        if scheme == 'socks5':
+            request_proxies = {
+                'http': "socks5h://%s:%s" % (host, port),
+                'https': "socks5h://%s:%s" % (host, port)
+            }
+            scheme = 'https'
+        else:
+            request_proxies = {
+                scheme: "%s:%s" % (host, port)
+            }
 
         request_begin = time.time()
         try:
@@ -78,14 +86,14 @@ class GetProxy(object):
 
         anonymity = self._check_proxy_anonymity(response_json)
         export_address = self._check_export_address(response_json)
-        
+
         try:
             country = country or self.geoip_reader.country(host).country.iso_code
         except Exception:
             country = "unknown"
 
         return {
-            "type": scheme,
+            "type": proxy_type,
             "host": host,
             "export_address": export_address,
             "port": port,
@@ -105,6 +113,7 @@ class GetProxy(object):
         for proxy in proxies:
             self.pool.apply_async(self._validate_proxy, args=(proxy, 'http'), callback=save_result)
             self.pool.apply_async(self._validate_proxy, args=(proxy, 'https'), callback=save_result)
+            self.pool.apply_async(self._validate_proxy, args=(proxy, 'socks5'), callback=save_result)
 
         self.pool.join(timeout=timeout)
         self.pool.kill()
