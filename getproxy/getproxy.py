@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import unicode_literals, absolute_import, division, print_function
+from tkinter.messagebox import NO
 
 import gevent.monkey
 gevent.monkey.patch_all()
@@ -47,32 +48,24 @@ class GetProxy(object):
 
             self.web_proxies.extend(plugin.result)
 
-    def _validate_proxy(self, proxy, scheme='http'):
+    def _validate_proxy(self, proxy, in_prot='http', out_prot='http'):
         country = proxy.get('country')
         host = proxy.get('host')
         port = proxy.get('port')
-        proxy_type = scheme
 
-        proxy_hash = '%s://%s:%s' % (scheme, host, port)
+        proxy_hash = '%s: %s://%s:%s' % (out_prot, in_prot, host, port)
         if proxy_hash in self.proxies_hash:
             return
 
         self.proxies_hash[proxy_hash] = True
-        if scheme == 'socks5':
-            request_proxies = {
-                'http': "socks5h://%s:%s" % (host, port),
-                'https': "socks5h://%s:%s" % (host, port)
-            }
-            scheme = 'https'
-        else:
-            request_proxies = {
-                scheme: "%s:%s" % (host, port)
-            }
+        request_proxies = {
+            out_prot: "%s://%s:%s" % (in_prot, host, port)
+        }
 
         request_begin = time.time()
         try:
             response_json = requests.get(
-                "%s://httpbin.org/get?show_env=1&cur=%s" % (scheme, request_begin),
+                "%s://httpbin.org/get?show_env=1&cur=%s" % (out_prot, request_begin),
                 proxies=request_proxies,
                 timeout=5
             ).json()
@@ -93,10 +86,11 @@ class GetProxy(object):
             country = "unknown"
 
         return {
-            "type": proxy_type,
+            "out_prot": out_prot,
+            "in_prot": in_prot,
             "host": host,
-            "export_address": export_address,
             "port": port,
+            "export_address": export_address,
             "anonymity": anonymity,
             "country": country,
             "response_time": round(request_end - request_begin, 2),
@@ -111,9 +105,17 @@ class GetProxy(object):
                 valid_proxies.append(p)
 
         for proxy in proxies:
-            self.pool.apply_async(self._validate_proxy, args=(proxy, 'http'), callback=save_result)
-            self.pool.apply_async(self._validate_proxy, args=(proxy, 'https'), callback=save_result)
-            self.pool.apply_async(self._validate_proxy, args=(proxy, 'socks5'), callback=save_result)
+            in_prot = proxy.get('in_prot')
+            out_prot = proxy.get('out_prot')
+            if in_prot and out_prot:
+                self.pool.apply_async(self._validate_proxy, args=(proxy, in_prot, out_prot), callback=save_result)
+            else:
+                self.pool.apply_async(self._validate_proxy, args=(proxy, 'socks5', 'https'), callback=save_result)
+                self.pool.apply_async(self._validate_proxy, args=(proxy, 'socks5', 'http'), callback=save_result)
+                # self.pool.apply_async(self._validate_proxy, args=(proxy, 'https', 'https'), callback=save_result)
+                # self.pool.apply_async(self._validate_proxy, args=(proxy, 'https', 'http'), callback=save_result)
+                self.pool.apply_async(self._validate_proxy, args=(proxy, 'http', 'https'), callback=save_result)
+                self.pool.apply_async(self._validate_proxy, args=(proxy, 'http', 'http'), callback=save_result)
 
         self.pool.join(timeout=timeout)
         self.pool.kill()
